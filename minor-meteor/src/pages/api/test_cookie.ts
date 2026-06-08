@@ -65,7 +65,8 @@ export const POST: APIRoute = async ({ request }) => {
 
         const text = await resp.text();
 
-        const loginRequired = /Login\s*\/\s*Sign\s*Up/i.test(text) || /You must be logged in/i.test(text);
+        const loginRequired =
+            /Login\s*\/\s*Sign\s*Up/i.test(text) || /You must be logged in/i.test(text);
 
         return new Response(
             JSON.stringify({
@@ -74,6 +75,7 @@ export const POST: APIRoute = async ({ request }) => {
                 url: testUrl,
                 loginRequired,
                 title: extractTitle(text),
+                html: text,
             }),
             { status: 200, headers: { 'Content-Type': 'application/json' } }
         );
