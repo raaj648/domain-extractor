@@ -69,7 +69,7 @@ const github = settings.github || {};
         <h2>ExpiredDomains Cookies</h2>
         <p style="color: var(--text-muted); margin-bottom: 1.25rem;">
           Paste your authenticated cookies here. Format: JSON object of <code>cookieName</code> → <code>cookieValue</code>.
-          Example: <code>ExpiredDomainssessid: "472b9..."</code>
+          Example: <code>{'{ "ExpiredDomainssessid": "472b9..." }'}</code>
         </p>
 
         <form id="cookies-form" class="settings-form">
@@ -79,7 +79,7 @@ const github = settings.github || {};
               id="cookies_json"
               class="glass-input-full"
               rows={6}
-              placeholder="Enter cookies JSON">
+              placeholder="Enter cookies JSON"
             >{cookies && typeof cookies === 'object' ? JSON.stringify(cookies, null, 2) : ''}</textarea>
           </div>
           <button type="button" id="save-cookies-btn" class="btn">Update Session Cookies</button>
@@ -173,7 +173,7 @@ const github = settings.github || {};
     }
   </style>
 
-<script>
+  <script lang="ts">
     // Save Config Helper
     async function saveConfig(key: string, value: object) {
       try {
@@ -276,4 +276,3 @@ const github = settings.github || {};
     });
   </script>
 </Layout>
-
