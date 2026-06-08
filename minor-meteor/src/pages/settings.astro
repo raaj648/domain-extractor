@@ -82,7 +82,10 @@ const github = settings.github || {};
               placeholder='{"ExpiredDomainssessid":"472b9ca621d5f0292d1fd432fcc8aa43"}'
             >{cookies && typeof cookies === 'object' ? JSON.stringify(cookies, null, 2) : ''}</textarea>
           </div>
-          <button type="button" id="save-cookies-btn" class="btn">Update Session Cookies</button>
+          <div class="button-row" style="margin-top: 0.5rem;">
+            <button type="button" id="save-cookies-btn" class="btn">Update Session Cookies</button>
+            <button type="button" id="test-cookies-btn" class="btn secondary-btn">Test Cookie</button>
+          </div>
         </form>
       </div>
 
@@ -264,6 +267,28 @@ const github = settings.github || {};
         await saveConfig('cookies', parseData.cookies);
       } catch (err) {
         alert('Error saving cookies: ' + err);
+      }
+    });
+
+    // Test cookie button
+    document.getElementById('test-cookies-btn')?.addEventListener('click', async () => {
+      try {
+        const res = await fetch('/api/test_cookie', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: 'https://member.expireddomains.net/domains/combinedexpired/' })
+        });
+
+        const data = await res.json();
+        if (!res.ok || !data.ok) {
+          alert('Cookie test failed: ' + (data.error || 'unknown error'));
+          return;
+        }
+
+        const statusText = data.loginRequired ? 'Not authenticated (login required)' : 'Authenticated (cookie looks valid)';
+        alert(`Cookie test: ${statusText}\nStatus: ${data.status}\nTitle: ${data.title || 'N/A'}`);
+      } catch (err) {
+        alert('Cookie test error: ' + err);
       }
     });
 
