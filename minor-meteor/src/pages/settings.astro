@@ -1,4 +1,3 @@
----
 import Layout from '../layouts/Layout.astro';
 import { createClient } from '@supabase/supabase-js';
 
@@ -82,9 +81,20 @@ const github = settings.github || {};
               placeholder='{"ExpiredDomainssessid":"472b9ca621d5f0292d1fd432fcc8aa43"}'
             >{cookies && typeof cookies === 'object' ? JSON.stringify(cookies, null, 2) : ''}</textarea>
           </div>
-          <div class="button-row" style="margin-top: 0.5rem;">
+          <div class="button-row" style="margin-top: 0.5rem; align-items: center;">
             <button type="button" id="save-cookies-btn" class="btn">Update Session Cookies</button>
-            <button type="button" id="test-cookies-btn" class="btn secondary-btn">Test Cookie</button>
+
+            <div class="form-group" style="min-width: 360px; margin: 0;">
+              <label>Test URL</label>
+              <input
+                type="text"
+                id="test_url"
+                value="https://member.expireddomains.net/domains/combinedexpired/"
+                class="glass-input-full"
+              />
+            </div>
+
+            <button type="button" id="test-cookies-btn" class="btn secondary-btn" style="height: fit-content;">Test Cookie</button>
           </div>
         </form>
       </div>
@@ -270,13 +280,21 @@ const github = settings.github || {};
       }
     });
 
-    // Test cookie button
+    // Test cookie button (backend fetches HTML using Cookie header, then opens rendered HTML in a new tab)
     document.getElementById('test-cookies-btn')?.addEventListener('click', async () => {
+      const testUrlInput = document.getElementById('test_url') as HTMLInputElement | null;
+      const testUrl = (testUrlInput?.value || '').trim();
+
+      if (!testUrl) {
+        alert('Test URL is required.');
+        return;
+      }
+
       try {
         const res = await fetch('/api/test_cookie', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url: 'https://member.expireddomains.net/domains/combinedexpired/' })
+          body: JSON.stringify({ url: testUrl })
         });
 
         const data = await res.json();
@@ -287,6 +305,22 @@ const github = settings.github || {};
 
         const statusText = data.loginRequired ? 'Not authenticated (login required)' : 'Authenticated (cookie looks valid)';
         alert(`Cookie test: ${statusText}\nStatus: ${data.status}\nTitle: ${data.title || 'N/A'}`);
+
+        const html = typeof data.html === 'string' ? data.html : '';
+        if (!html) {
+          alert('No HTML returned by cookie tester.');
+          return;
+        }
+
+        // Open new tab and write the returned HTML.
+        const w = window.open('', '_blank', 'noopener,noreferrer');
+        if (!w) {
+          alert('Popup blocked. Please allow popups to view HTML preview.');
+          return;
+        }
+        w.document.open();
+        w.document.write(html);
+        w.document.close();
       } catch (err) {
         alert('Cookie test error: ' + err);
       }
