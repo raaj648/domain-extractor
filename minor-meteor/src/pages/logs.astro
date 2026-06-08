@@ -1,0 +1,205 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { createClient } from '@supabase/supabase-js';
+
+export const prerender = false;
+
+const supabaseUrl = import.meta.env.SUPABASE_URL || process.env.SUPABASE_URL;
+const supabaseKey = import.meta.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Fetch cron runs and GHA jobs
+const { data: cronRuns } = await supabase
+  .from('cron_runs')
+  .select('*')
+  .order('run_time', { ascending: false })
+  .limit(25);
+
+const { data: scrapeJobs } = await supabase
+  .from('scrape_jobs')
+  .select('*')
+  .order('started_at', { ascending: false })
+  .limit(15);
+---
+
+<Layout title="Execution Logs">
+  <div class="logs-page-container">
+    <h1>System Logs & Health Monitor</h1>
+    <p style="color: var(--text-muted); margin-bottom: 2rem;">Real-time execution diagnostics for the scraper worker and DNS availability cron checker.</p>
+
+    <div class="logs-grid">
+      <!-- Cron Runs (5-Minute Checker) -->
+      <div class="glass-card log-panel">
+        <h2>Cron Checker Executions (5m intervals)</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">Logs from Vercel Serverless checker querying drops and resolving DNS.</p>
+        
+        <div class="runs-list">
+          {cronRuns && cronRuns.length > 0 ? (
+            cronRuns.map(run => (
+              <div class="run-item">
+                <div class="run-header">
+                  <span class={`status-dot ${run.status === 'success' ? 'bg-success' : 'bg-danger'}`}></span>
+                  <span class="run-time">{new Date(run.run_time).toLocaleString()}</span>
+                  <span class="run-duration">{run.duration_ms} ms</span>
+                </div>
+                <div class="run-details">
+                  <p><strong>Checked:</strong> {run.domains_checked && run.domains_checked.length > 0 ? run.domains_checked.join(', ') : 'No dropping domains today'}</p>
+                  {run.error_message && <p class="error-msg">Error: {run.error_message}</p>}
+                </div>
+              </div>
+            ))
+          ) : (
+            <p style="color: var(--text-muted); padding: 2rem; text-align: center;">No cron executions recorded. Setup cron-jobs.org target calling `/api/cron`.</p>
+          )}
+        </div>
+      </div>
+
+      <!-- Scraper Jobs (GitHub Actions) -->
+      <div class="glass-card log-panel">
+        <h2>Daily Scraper Executions (GitHub Actions)</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">Logs recording full table extraction runs against ExpiredDomains.net.</p>
+        
+        <div class="jobs-list">
+          {scrapeJobs && scrapeJobs.length > 0 ? (
+            scrapeJobs.map(job => (
+              <div class="job-item">
+                <div class="job-header">
+                  <span class={`badge ${job.status === 'success' ? 'badge-available' : job.status === 'failed' ? 'badge-registered' : 'badge-pending'}`}>
+                    {job.status.toUpperCase()}
+                  </span>
+                  <span class="job-time">{new Date(job.started_at).toLocaleString()}</span>
+                </div>
+                <div class="job-meta">
+                  <span>Found: <strong>{job.domains_found}</strong></span>
+                  <span>New: <strong>{job.domains_inserted}</strong></span>
+                </div>
+                {job.error_message && <p class="error-msg">Error: {job.error_message}</p>}
+                
+                {job.logs && (
+                  <details class="logs-details">
+                    <summary>View Output Trace logs</summary>
+                    <pre class="logs-pre">{job.logs}</pre>
+                  </details>
+                )}
+              </div>
+            ))
+          ) : (
+            <p style="color: var(--text-muted); padding: 2rem; text-align: center;">No scraper runs recorded. Set GitHub secrets and trigger run from dashboard.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .logs-page-container {
+      display: flex;
+      flex-direction: column;
+    }
+    .logs-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+    @media (max-width: 1024px) {
+      .logs-grid { grid-template-columns: 1fr; }
+    }
+
+    .log-panel {
+      display: flex;
+      flex-direction: column;
+    }
+    .runs-list, .jobs-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      max-height: 700px;
+      overflow-y: auto;
+      padding-right: 0.5rem;
+    }
+    .runs-list::-webkit-scrollbar, .jobs-list::-webkit-scrollbar {
+      width: 6px;
+    }
+    .runs-list::-webkit-scrollbar-thumb, .jobs-list::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 3px;
+    }
+
+    .run-item, .job-item {
+      background: rgba(255, 255, 255, 0.01);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 1rem;
+      transition: var(--transition);
+    }
+    .run-item:hover, .job-item:hover {
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+    
+    .run-header, .job-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .bg-success { background-color: var(--success); }
+    .bg-danger { background-color: var(--danger); }
+    .run-time, .job-time {
+      font-weight: 500;
+    }
+    .run-duration {
+      color: var(--text-muted);
+      margin-left: auto;
+      font-size: 0.8rem;
+    }
+
+    .run-details {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+    .error-msg {
+      color: var(--danger);
+      margin-top: 0.4rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+
+    .job-meta {
+      display: flex;
+      gap: 1.5rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+    .logs-details {
+      margin-top: 0.75rem;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .logs-details summary {
+      color: var(--primary);
+      font-weight: 500;
+      outline: none;
+    }
+    .logs-pre {
+      background: #040508;
+      border: 1px solid var(--glass-border);
+      border-radius: 6px;
+      padding: 0.75rem;
+      margin-top: 0.5rem;
+      overflow-x: auto;
+      font-family: monospace;
+      color: #00ff87;
+      max-height: 200px;
+      line-height: 1.4;
+    }
+  </style>
+</Layout>

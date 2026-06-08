@@ -1,0 +1,2 @@
+Always use:
+1. You have to always identify the required skill for the task, then you have to look for that specific skill in our project. If the matching skill not found, then you have to find the skill and download and then use that skill properly for that specific task. So that you can do any task without any mistake or following any wrong approach.

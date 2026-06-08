@@ -1,0 +1,221 @@
+---
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+const currentPath = Astro.url.pathname;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{title} | Domain Extractor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style is:global>
+    :root {
+      --bg-dark: #07080e;
+      --glass-bg: rgba(13, 17, 30, 0.75);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --primary: #00f2fe;
+      --secondary: #4facfe;
+      --accent-purple: #bd00ff;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --success: #00ff87;
+      --warning: #ffb800;
+      --danger: #ff4757;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(0, 242, 254, 0.08) 0px, transparent 40%),
+        radial-gradient(at 100% 100%, rgba(189, 0, 255, 0.08) 0px, transparent 40%);
+      background-attachment: fixed;
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--glass-border);
+      padding: 1.25rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .logo {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
+    }
+
+    nav {
+      display: flex;
+      gap: 1rem;
+    }
+
+    nav a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.95rem;
+      transition: var(--transition);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      border: 1px solid transparent;
+    }
+
+    nav a:hover {
+      color: var(--primary);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    nav a.active {
+      color: #000;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      font-weight: 600;
+      box-shadow: 0 4px 15px rgba(0, 242, 254, 0.25);
+    }
+
+    main {
+      flex: 1;
+      padding: 2.5rem 2rem;
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .glass-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      backdrop-filter: blur(20px);
+      padding: 1.5rem;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      transition: var(--transition);
+    }
+
+    .glass-card:hover {
+      border-color: rgba(0, 242, 254, 0.2);
+    }
+
+    h1, h2, h3 {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    button, .btn {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border: none;
+      color: #05060b;
+      font-weight: 600;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: var(--transition);
+      box-shadow: 0 4px 15px rgba(0, 242, 254, 0.2);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    button:hover, .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 242, 254, 0.4);
+    }
+
+    button:disabled, .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.75rem;
+      border-radius: 99px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .badge-pending { background: rgba(255, 184, 0, 0.12); color: var(--warning); border: 1px solid rgba(255, 184, 0, 0.25); }
+    .badge-available { 
+      background: rgba(0, 255, 135, 0.15); 
+      color: var(--success); 
+      border: 1px solid rgba(0, 255, 135, 0.3);
+      animation: pulse 2s infinite;
+    }
+    .badge-registered { background: rgba(255, 71, 87, 0.12); color: var(--danger); border: 1px solid rgba(255, 71, 87, 0.25); }
+    .badge-ignored { background: rgba(255, 255, 255, 0.05); color: var(--text-muted); border: 1px solid rgba(255, 255, 255, 0.1); }
+    .badge-purchased { background: rgba(189, 0, 255, 0.15); color: #bd00ff; border: 1px solid rgba(189, 0, 255, 0.3); }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(0, 255, 135, 0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(0, 255, 135, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(0, 255, 135, 0); }
+    }
+
+    /* General Form elements */
+    .glass-input-full {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      width: 100%;
+      transition: var(--transition);
+    }
+    .glass-input-full:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 10px rgba(0, 242, 254, 0.15);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">🚀 DOMAIN EXTRACTOR</div>
+    <nav>
+      <a href="/" class={currentPath === '/' ? 'active' : ''}>Dashboard</a>
+      <a href="/targets" class={currentPath === '/targets' ? 'active' : ''}>Search Targets</a>
+      <a href="/logs" class={currentPath === '/logs' ? 'active' : ''}>Execution Logs</a>
+      <a href="/settings" class={currentPath === '/settings' ? 'active' : ''}>Settings</a>
+    </nav>
+  </header>
+  <main>
+    <slot />
+  </main>
+</body>
+</html>

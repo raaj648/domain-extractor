@@ -1,0 +1,448 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { createClient } from '@supabase/supabase-js';
+
+export const prerender = false;
+
+const supabaseUrl = import.meta.env.SUPABASE_URL || process.env.SUPABASE_URL;
+const supabaseKey = import.meta.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Handle status updates or deletions
+if (Astro.request.method === 'POST') {
+  try {
+    const data = await Astro.request.formData();
+    const domain = data.get('domain') as string;
+    const action = data.get('action') as string;
+
+    if (domain && action) {
+      if (action === 'ignore') {
+        await supabase
+          .from('tracked_domains')
+          .update({ status: 'ignored' })
+          .eq('domain', domain);
+      } else if (action === 'purchase') {
+        await supabase
+          .from('tracked_domains')
+          .update({ status: 'purchased' })
+          .eq('domain', domain);
+      } else if (action === 'delete') {
+        await supabase
+          .from('tracked_domains')
+          .delete()
+          .eq('domain', domain);
+      }
+    }
+  } catch (e) {
+    console.error('Error handling post action:', e);
+  }
+}
+
+// Fetch domains
+const { data: domains } = await supabase
+  .from('tracked_domains')
+  .select('*')
+  .order('scraped_at', { ascending: false });
+
+const totalTracked = domains?.length || 0;
+const totalAvailable = domains?.filter(d => d.status === 'available').length || 0;
+const totalPending = domains?.filter(d => d.status === 'pending_delete').length || 0;
+const totalRegistered = domains?.filter(d => d.status === 'registered').length || 0;
+
+const today = new Date().toISOString().split('T')[0];
+const totalTodayDrops = domains?.filter(d => d.delete_date === today).length || 0;
+---
+
+<Layout title="Dashboard">
+  <div class="dashboard-grid">
+    <!-- Header Controls -->
+    <div class="welcome-row">
+      <div>
+        <h1>System Analytics</h1>
+        <p style="color: var(--text-muted);">Real-time monitoring of expired domain acquisitions</p>
+      </div>
+      <button id="trigger-scrape-btn">⚡ Run Scraper Now</button>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="stats-row">
+      <div class="glass-card stat-card">
+        <span class="stat-title">Total Tracked</span>
+        <span class="stat-value">{totalTracked}</span>
+      </div>
+      <div class="glass-card stat-card border-success">
+        <span class="stat-title">Available Now</span>
+        <span class="stat-value text-success">{totalAvailable}</span>
+      </div>
+      <div class="glass-card stat-card border-warning">
+        <span class="stat-title">Pending Delete</span>
+        <span class="stat-value text-warning">{totalPending}</span>
+      </div>
+      <div class="glass-card stat-card">
+        <span class="stat-title">Today's Drops</span>
+        <span class="stat-value">{totalTodayDrops}</span>
+      </div>
+    </div>
+
+    <!-- Main Section -->
+    <div class="main-grid">
+      <!-- Domain List -->
+      <div class="glass-card domains-list-container">
+        <div class="table-header">
+          <h2>Monitored Domains</h2>
+          <div class="filter-controls">
+            <input type="text" id="domain-search" placeholder="Search domains..." class="glass-input" />
+            <select id="status-filter" class="glass-select">
+              <option value="all">All Statuses</option>
+              <option value="pending_delete">Pending Delete</option>
+              <option value="available">Available</option>
+              <option value="registered">Registered</option>
+              <option value="ignored">Ignored</option>
+              <option value="purchased">Purchased</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="domains-table">
+            <thead>
+              <tr>
+                <th>Domain Name</th>
+                <th>TLD</th>
+                <th>Status</th>
+                <th>Delete Date</th>
+                <th>Last Checked</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="domains-tbody">
+              {domains && domains.length > 0 ? (
+                domains.map(d => (
+                  <tr data-domain={d.domain} data-status={d.status}>
+                    <td class="font-bold">{d.domain}</td>
+                    <td><span class="tld-badge">{d.tld}</span></td>
+                    <td><span class={`badge badge-${d.status}`}>{d.status.replace('_', ' ')}</span></td>
+                    <td>{d.delete_date || 'N/A'}</td>
+                    <td>{d.last_checked_at ? new Date(d.last_checked_at).toLocaleTimeString() : 'Never'}</td>
+                    <td>
+                      <div class="action-buttons">
+                        <a href={`https://www.namecheap.com/domains/registration/results/?domain=${d.domain}`} target="_blank" class="buy-link">🛒 Buy</a>
+                        
+                        <form method="POST" style="display:inline;">
+                          <input type="hidden" name="domain" value={d.domain} />
+                          {d.status !== 'ignored' && (
+                            <button type="submit" name="action" value="ignore" class="status-btn ignore-btn">Ignore</button>
+                          )}
+                          {d.status !== 'purchased' && (
+                            <button type="submit" name="action" value="purchase" class="status-btn purchase-btn">Got It</button>
+                          )}
+                          <button type="submit" name="action" value="delete" class="status-btn delete-btn">Delete</button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 3rem;">No domains tracked yet. Add search targets or run scraper.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Quick Analytics and Health -->
+      <div class="sidebar-container">
+        <div class="glass-card health-card">
+          <h3>System Health</h3>
+          <div class="health-item">
+            <span>5m Cron Checker</span>
+            <span class="health-status status-ok">Active</span>
+          </div>
+          <div class="health-item">
+            <span>Daily Scraper</span>
+            <span class="health-status status-ok">Online</span>
+          </div>
+        </div>
+
+        <div class="glass-card chart-card">
+          <h3>Conversion Performance</h3>
+          <div class="chart-dummy">
+            <div class="bar-row">
+              <span>Success</span>
+              <div class="bar-container"><div class="bar-fill" style="width: 80%; background: var(--success);"></div></div>
+              <span>{totalAvailable} available</span>
+            </div>
+            <div class="bar-row">
+              <span>Missed</span>
+              <div class="bar-container"><div class="bar-fill" style="width: 20%; background: var(--danger);"></div></div>
+              <span>{totalRegistered} registered</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .dashboard-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+    .welcome-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem;
+    }
+    .stat-card {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      border: 1px solid var(--glass-border);
+    }
+    .stat-title {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .stat-value {
+      font-size: 2.25rem;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+    }
+    .text-success { color: var(--success); }
+    .text-warning { color: var(--warning); }
+    .border-success { border-color: rgba(0, 255, 135, 0.2); }
+    .border-warning { border-color: rgba(255, 184, 0, 0.2); }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 3fr 1fr;
+      gap: 1.5rem;
+    }
+    @media (max-width: 1024px) {
+      .main-grid { grid-template-columns: 1fr; }
+    }
+
+    .domains-list-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    .table-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .filter-controls {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .glass-input {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      transition: var(--transition);
+      width: 200px;
+    }
+    .glass-input:focus {
+      border-color: var(--primary);
+    }
+    .glass-select {
+      background: rgba(13, 17, 30, 0.9);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      transition: var(--transition);
+      cursor: pointer;
+    }
+    
+    .table-responsive {
+      overflow-x: auto;
+    }
+    .domains-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+    .domains-table th, .domains-table td {
+      padding: 1rem;
+      border-bottom: 1px solid var(--glass-border);
+      font-size: 0.95rem;
+    }
+    .domains-table th {
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .font-bold {
+      font-weight: 600;
+    }
+    .tld-badge {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.85rem;
+    }
+    .action-buttons {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .buy-link {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: var(--transition);
+    }
+    .buy-link:hover {
+      text-decoration: underline;
+    }
+    .status-btn {
+      background: transparent;
+      border: 1px solid var(--glass-border);
+      color: var(--text-muted);
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      box-shadow: none;
+      border-radius: 6px;
+      margin-left: 0.25rem;
+    }
+    .status-btn:hover {
+      transform: none;
+      box-shadow: none;
+    }
+    .ignore-btn:hover {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-main);
+    }
+    .purchase-btn:hover {
+      background: rgba(189, 0, 255, 0.1);
+      color: #bd00ff;
+      border-color: #bd00ff;
+    }
+    .delete-btn:hover {
+      background: rgba(255, 71, 87, 0.1);
+      color: var(--danger);
+      border-color: var(--danger);
+    }
+
+    .sidebar-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    .health-card, .chart-card {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+    .health-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .health-status {
+      font-weight: 600;
+    }
+    .status-ok { color: var(--success); }
+
+    /* Bar representations */
+    .bar-row {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      margin-bottom: 1rem;
+      font-size: 0.85rem;
+    }
+    .bar-container {
+      background: rgba(255, 255, 255, 0.05);
+      height: 8px;
+      border-radius: 4px;
+      overflow: hidden;
+      width: 100%;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 4px;
+    }
+  </style>
+
+  <script>
+    // Live Search Filter logic
+    const searchInput = document.getElementById('domain-search');
+    const statusFilter = document.getElementById('status-filter');
+
+    function filterTable() {
+      const query = (searchInput as HTMLInputElement)?.value.toLowerCase() || '';
+      const selectedStatus = (statusFilter as HTMLSelectElement)?.value || 'all';
+      const rows = document.querySelectorAll('#domains-tbody tr');
+      
+      rows.forEach(row => {
+        const domain = row.getAttribute('data-domain');
+        const status = row.getAttribute('data-status');
+        
+        if (domain && status) {
+          const matchesSearch = domain.includes(query);
+          const matchesStatus = selectedStatus === 'all' || status === selectedStatus;
+          
+          if (matchesSearch && matchesStatus) {
+            (row as HTMLElement).style.display = '';
+          } else {
+            (row as HTMLElement).style.display = 'none';
+          }
+        }
+      });
+    }
+
+    searchInput?.addEventListener('input', filterTable);
+    statusFilter?.addEventListener('change', filterTable);
+
+    // Trigger Scraper Action
+    const triggerBtn = document.getElementById('trigger-scrape-btn');
+    triggerBtn?.addEventListener('click', async () => {
+      triggerBtn.textContent = '⌛ Triggering...';
+      triggerBtn.setAttribute('disabled', 'true');
+      try {
+        const res = await fetch('/api/trigger-scrape', { method: 'POST' });
+        if (res.ok) {
+          alert('Scraper execution triggered successfully on GitHub Actions!');
+        } else {
+          const data = await res.json();
+          alert('Failed to trigger scraper: ' + data.error);
+        }
+      } catch (err) {
+        alert('Error communicating with backend: ' + err);
+      } finally {
+        triggerBtn.textContent = '⚡ Run Scraper Now';
+        triggerBtn.removeAttribute('disabled');
+      }
+    });
+  </script>
+</Layout>

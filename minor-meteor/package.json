@@ -1,0 +1,21 @@
+{
+  "name": "minor-meteor",
+  "type": "module",
+  "version": "0.0.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/vercel": "^10.0.8",
+    "@octokit/rest": "^22.0.1",
+    "@supabase/supabase-js": "^2.108.0",
+    "astro": "^6.4.4",
+    "dotenv": "^17.4.2"
+  }
+}

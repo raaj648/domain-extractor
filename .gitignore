@@ -1,0 +1,18 @@
+# Astro Node modules and builds
+minor-meteor/node_modules/
+minor-meteor/.vercel/
+minor-meteor/.env
+minor-meteor/dist/
+
+# Python caching and environments
+**/__pycache__/
+**/*.pyc
+.env
+scraper/.env
+
+# IDE and agent settings
+.agents/
+.claude/
+.kilocode/
+.qwen/
+skills-lock.json
