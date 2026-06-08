@@ -1,0 +1,18 @@
+{
+  "exported_at_utc": "2026-06-08T20:17:58.416563Z",
+  "cookie_count": 1,
+  "cookies": [
+    {
+      "name": "ExpiredDomainssessid",
+      "domain": "member.expireddomains.net",
+      "path": "/",
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "Lax",
+      "expires": -1,
+      "value": "39e6a3b294ddad82ffc94ccca308d465"
+    }
+  ],
+  "show_values": true,
+  "note": "All cookies returned by Playwright context.cookies()."
+}

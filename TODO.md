@@ -1,0 +1,4 @@
+- [ ] Update scraper/scrape.py to send cookies dynamically from settings.cookies (any cookie names/values).
+- [ ] Update minor-meteor/src/pages/settings.astro to replace fixed cookie fields with a single “Cookies JSON” textarea.
+- [ ] Basic sanity test: run cookie-extractor cookie tester with your exported JSON to confirm it still authenticates.
+- [ ] Run/verify scraper code path locally (import/parse check) to ensure no runtime errors from new cookie parsing.

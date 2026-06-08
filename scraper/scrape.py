@@ -54,11 +54,17 @@ def main():
         chat_id = tg_conf.get("chat_id")
         notify_discovery = tg_conf.get("notify_on_discovery", True)
         
-        session_id = cookies_conf.get("sessionid")
-        ed_session = cookies_conf.get("expireddomains_session")
-        
-        if not session_id or not ed_session:
-            raise Exception("ExpiredDomains session cookies are missing in Supabase settings. Please update them in settings.")
+        # Support cookie objects with arbitrary cookie names.
+        # Example (from cookie-extractor): {"ExpiredDomainssessid": "..."}
+        # Backwards compatible with the old schema:
+        # {"sessionid": "...", "expireddomains_session": "..."}
+        if not isinstance(cookies_conf, dict) or not cookies_conf:
+            raise Exception("ExpiredDomains cookies are missing in Supabase settings. Please update them in settings.")
+
+        # Filter out empty values
+        cookies = {k: v for k, v in cookies_conf.items() if isinstance(v, str) and v.strip()}
+        if not cookies:
+            raise Exception("ExpiredDomains cookies are empty. Please update them in settings with at least one cookie value.")
 
         # Load active targets
         targets_res = db.table("targets").select("*").eq("is_active", True).execute()
@@ -88,10 +94,8 @@ def main():
                 "Connection": "keep-alive"
             }
             
-            cookies = {
-                "sessionid": session_id,
-                "expireddomains_session": ed_session
-            }
+            # Send all provided cookies
+            # (curl_cffi will serialize the dict into Cookie header)
 
             # Use curl_cffi to match browser TLS fingerprint
             response = cffi_requests.get(

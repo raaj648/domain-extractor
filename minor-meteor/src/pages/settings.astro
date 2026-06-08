@@ -67,16 +67,20 @@ const github = settings.github || {};
       <!-- ExpiredDomains.net Session Cookies -->
       <div class="glass-card">
         <h2>ExpiredDomains Cookies</h2>
-        <p style="color: var(--text-muted); margin-bottom: 1.25rem;">Provide active cookies from your browser session to allow authentication on GHA.</p>
-        
+        <p style="color: var(--text-muted); margin-bottom: 1.25rem;">
+          Paste your authenticated cookies here. Format: JSON object of <code>cookieName</code> → <code>cookieValue</code>.
+          Example: <code>{"{"} "ExpiredDomainssessid": "472b9..."{ "}"}</code>
+        </p>
+
         <form id="cookies-form" class="settings-form">
           <div class="form-group">
-            <label>sessionid cookie</label>
-            <input type="password" id="sessionid" value={cookies.sessionid || ''} class="glass-input-full" placeholder="sessionid cookie value" />
-          </div>
-          <div class="form-group">
-            <label>expireddomains_session cookie</label>
-            <input type="password" id="expireddomains_session" value={cookies.expireddomains_session || ''} class="glass-input-full" placeholder="expireddomains_session cookie value" />
+            <label>Cookies JSON</label>
+            <textarea
+              id="cookies_json"
+              class="glass-input-full"
+              rows={6}
+              placeholder='{"ExpiredDomainssessid":"472b9ca621d5f0292d1fd432fcc8aa43"}'
+            >{cookies && typeof cookies === 'object' ? JSON.stringify(cookies, null, 2) : ''}</textarea>
           </div>
           <button type="button" id="save-cookies-btn" class="btn">Update Session Cookies</button>
         </form>
@@ -233,11 +237,34 @@ const github = settings.github || {};
       }
     });
 
-    // Bind cookies button
-    document.getElementById('save-cookies-btn')?.addEventListener('click', () => {
-      const sessionid = (document.getElementById('sessionid') as HTMLInputElement).value;
-      const expireddomains_session = (document.getElementById('expireddomains_session') as HTMLInputElement).value;
-      saveConfig('cookies', { sessionid, expireddomains_session });
+    // Bind cookies button (cookies JSON → settings.cookies JSONB)
+    document.getElementById('save-cookies-btn')?.addEventListener('click', async () => {
+      const textarea = document.getElementById('cookies_json') as HTMLTextAreaElement;
+      const raw = (textarea?.value || '').trim();
+
+      if (!raw) {
+        alert('Cookies JSON is required.');
+        return;
+      }
+
+      // Validate JSON server-side before saving
+      try {
+        const parseRes = await fetch('/api/parse_cookies_json', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ json: raw })
+        });
+
+        const parseData = await parseRes.json();
+        if (!parseRes.ok) {
+          alert('Invalid cookies JSON: ' + (parseData.error || 'unknown error'));
+          return;
+        }
+
+        await saveConfig('cookies', parseData.cookies);
+      } catch (err) {
+        alert('Error saving cookies: ' + err);
+      }
     });
 
     // Bind github button

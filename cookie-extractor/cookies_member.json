@@ -1,0 +1,19 @@
+{
+  "exported_at_utc": "2026-06-08T20:19:59.111977Z",
+  "target_domain": "member.expireddomains.net",
+  "cookie_count": 1,
+  "cookies": [
+    {
+      "name": "ExpiredDomainssessid",
+      "domain": "member.expireddomains.net",
+      "path": "/",
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "Lax",
+      "expires": -1,
+      "value": "472b9ca621d5f0292d1fd432fcc8aa43"
+    }
+  ],
+  "show_values": true,
+  "note": "Filtered to cookies where TARGET_DOMAIN is included in cookie.domain."
+}
