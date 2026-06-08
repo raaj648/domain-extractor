@@ -1,3 +1,4 @@
+---
 import Layout from '../layouts/Layout.astro';
 import { createClient } from '@supabase/supabase-js';
 
@@ -32,7 +33,7 @@ const github = settings.github || {};
         <form id="telegram-form" class="settings-form">
           <div class="form-group">
             <label>Bot Token</label>
-            <input type="password" id="bot_token" value={telegram.bot_token || ''} class="glass-input-full" placeholder="512345678:AAH..." />
+            <input type="password" id="bot_token" value={telegram?.bot_token || ''} class="glass-input-full" placeholder="512345678:AAH..." />
           </div>
           <div class="form-group">
             <label>Chat ID</label>
@@ -68,7 +69,7 @@ const github = settings.github || {};
         <h2>ExpiredDomains Cookies</h2>
         <p style="color: var(--text-muted); margin-bottom: 1.25rem;">
           Paste your authenticated cookies here. Format: JSON object of <code>cookieName</code> → <code>cookieValue</code>.
-          Example: <code>{"ExpiredDomainssessid":"472b9..."}</code>
+          Example: <code>ExpiredDomainssessid: "472b9..."</code>
         </p>
 
         <form id="cookies-form" class="settings-form">
@@ -78,24 +79,10 @@ const github = settings.github || {};
               id="cookies_json"
               class="glass-input-full"
               rows={6}
-              placeholder='{"ExpiredDomainssessid":"472b9ca621d5f0292d1fd432fcc8aa43"}'
+              placeholder="Enter cookies JSON">
             >{cookies && typeof cookies === 'object' ? JSON.stringify(cookies, null, 2) : ''}</textarea>
           </div>
-          <div class="button-row" style="margin-top: 0.5rem; align-items: center;">
-            <button type="button" id="save-cookies-btn" class="btn">Update Session Cookies</button>
-
-            <div class="form-group" style="min-width: 360px; margin: 0;">
-              <label>Test URL</label>
-              <input
-                type="text"
-                id="test_url"
-                value="https://member.expireddomains.net/domains/combinedexpired/"
-                class="glass-input-full"
-              />
-            </div>
-
-            <button type="button" id="test-cookies-btn" class="btn secondary-btn" style="height: fit-content;">Test Cookie</button>
-          </div>
+          <button type="button" id="save-cookies-btn" class="btn">Update Session Cookies</button>
         </form>
       </div>
 
@@ -103,7 +90,7 @@ const github = settings.github || {};
       <div class="glass-card">
         <h2>GitHub Scraper Trigger</h2>
         <p style="color: var(--text-muted); margin-bottom: 1.25rem;">Allows the dashboard to trigger the scraper on-demand via the GitHub API.</p>
-        
+
         <form id="github-form" class="settings-form">
           <div class="form-group">
             <label>Repository Owner</label>
@@ -186,7 +173,7 @@ const github = settings.github || {};
     }
   </style>
 
-  <script>
+<script>
     // Save Config Helper
     async function saveConfig(key: string, value: object) {
       try {
@@ -215,13 +202,13 @@ const github = settings.github || {};
       const notify_on_available = (document.getElementById('notify_on_available') as HTMLInputElement).checked;
       const notify_on_errors = (document.getElementById('notify_on_errors') as HTMLInputElement).checked;
 
-      saveConfig('telegram', { 
-        bot_token, 
-        chat_id, 
-        notify_on_discovery, 
-        notify_on_delete_day, 
-        notify_on_available, 
-        notify_on_errors 
+      saveConfig('telegram', {
+        bot_token,
+        chat_id,
+        notify_on_discovery,
+        notify_on_delete_day,
+        notify_on_available,
+        notify_on_errors
       });
     });
 
@@ -280,52 +267,6 @@ const github = settings.github || {};
       }
     });
 
-    // Test cookie button (backend fetches HTML using Cookie header, then opens rendered HTML in a new tab)
-    document.getElementById('test-cookies-btn')?.addEventListener('click', async () => {
-      const testUrlInput = document.getElementById('test_url') as HTMLInputElement | null;
-      const testUrl = (testUrlInput?.value || '').trim();
-
-      if (!testUrl) {
-        alert('Test URL is required.');
-        return;
-      }
-
-      try {
-        const res = await fetch('/api/test_cookie', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url: testUrl })
-        });
-
-        const data = await res.json();
-        if (!res.ok || !data.ok) {
-          alert('Cookie test failed: ' + (data.error || 'unknown error'));
-          return;
-        }
-
-        const statusText = data.loginRequired ? 'Not authenticated (login required)' : 'Authenticated (cookie looks valid)';
-        alert(`Cookie test: ${statusText}\nStatus: ${data.status}\nTitle: ${data.title || 'N/A'}`);
-
-        const html = typeof data.html === 'string' ? data.html : '';
-        if (!html) {
-          alert('No HTML returned by cookie tester.');
-          return;
-        }
-
-        // Open new tab and write the returned HTML.
-        const w = window.open('', '_blank', 'noopener,noreferrer');
-        if (!w) {
-          alert('Popup blocked. Please allow popups to view HTML preview.');
-          return;
-        }
-        w.document.open();
-        w.document.write(html);
-        w.document.close();
-      } catch (err) {
-        alert('Cookie test error: ' + err);
-      }
-    });
-
     // Bind github button
     document.getElementById('save-github-btn')?.addEventListener('click', () => {
       const repo_owner = (document.getElementById('repo_owner') as HTMLInputElement).value;
@@ -335,3 +276,4 @@ const github = settings.github || {};
     });
   </script>
 </Layout>
+

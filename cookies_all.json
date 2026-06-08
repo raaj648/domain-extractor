@@ -1,5 +1,5 @@
 {
-  "exported_at_utc": "2026-06-08T20:17:58.416563Z",
+  "exported_at_utc": "2026-06-08T21:21:03.379828Z",
   "cookie_count": 1,
   "cookies": [
     {
@@ -9,10 +9,9 @@
       "httpOnly": true,
       "secure": true,
       "sameSite": "Lax",
-      "expires": -1,
-      "value": "39e6a3b294ddad82ffc94ccca308d465"
+      "expires": -1
     }
   ],
-  "show_values": true,
+  "show_values": false,
   "note": "All cookies returned by Playwright context.cookies()."
 }
