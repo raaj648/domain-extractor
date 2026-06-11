@@ -14,11 +14,29 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-          version: latest
-
-      - name: Run Migrations
+      - name: Apply Migrations via Supabase REST API
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          supabase db push --db-url "postgresql://postgres:${{ secrets.SUPABASE_DB_PASSWORD }}@db.${{ secrets.SUPABASE_PROJECT_ID }}.supabase.co:5432/postgres"
+          python - <<'PY'
+          import os, glob, requests
+          url = os.environ['SUPABASE_URL']
+          key = os.environ['SUPABASE_SERVICE_ROLE_KEY']
+          headers = {
+            'apikey': key,
+            'Authorization': f'Bearer {key}',
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal',
+          }
+          for path in sorted(glob.glob('supabase/migrations/*.sql')):
+            with open(path, 'r', encoding='utf-8') as f:
+              sql = f.read()
+            r = requests.post(
+              f"{url}/rest/v1/rpc/exec_sql",
+              headers=headers,
+              json={"query": sql},
+              timeout=60,
+            )
+            print(path, r.status_code, r.text[:300])
+          PY

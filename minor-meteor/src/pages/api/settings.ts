@@ -19,9 +19,9 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    const { error } = await supabase
-      .from('settings')
-      .upsert({ key, value, updated_at: new Date().toISOString() });
+ const { error } = await supabase
+ .from('settings')
+ .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
 
     if (error) throw error;
 
