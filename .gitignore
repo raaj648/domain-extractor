@@ -10,6 +10,9 @@ minor-meteor/dist/
 .env
 scraper/.env
 
+# Credentials directory (DO NOT COMMIT)
+credentials/
+
 # IDE and agent settings
 .agents/
 .claude/

@@ -50,6 +50,14 @@ def main():
         tg_conf = settings.get("telegram", {})
         cookies_conf = settings.get("cookies", {})
         
+        # Maximum domains to extract per run (for testing)
+        max_extract_domains = settings.get("max_extract_domains")
+        if max_extract_domains is not None:
+            try:
+                max_extract_domains = int(max_extract_domains)
+            except (ValueError, TypeError):
+                max_extract_domains = None
+        
         bot_token = tg_conf.get("bot_token")
         chat_id = tg_conf.get("chat_id")
         notify_discovery = tg_conf.get("notify_on_discovery", True)
@@ -130,6 +138,10 @@ def main():
             target_inserted = 0
 
             for row in rows:
+                # Check if we've reached the maximum extract limit
+                if max_extract_domains is not None and total_found >= max_extract_domains:
+                    log_message(f"Reached maximum extract limit of {max_extract_domains} domains. Stopping.")
+                    break
                 cols = row.find_all("td")
                 if not cols or len(cols) < 2:
                     continue
@@ -208,6 +220,11 @@ def main():
             db.table("targets").update({"last_scraped_at": datetime.utcnow().isoformat()}).eq("id", target["id"]).execute()
             log_message(f"Completed target '{target['name']}': found {target_found}, inserted {target_inserted} new.")
             time.sleep(3) # Polite crawl delay
+
+            # Check if we've reached the maximum extract limit after each target
+            if max_extract_domains is not None and total_found >= max_extract_domains:
+                log_message(f"Reached maximum extract limit of {max_extract_domains} domains. Stopping further targets.")
+                break
 
         # Finalize job entry as success
         db.table("scrape_jobs").update({

@@ -13,7 +13,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 const { data: settingsData } = await supabase.from('settings').select('*');
 const settings: Record<string, any> = {};
 settingsData?.forEach((s) => {
-  settings[s.key] = s.value;
+ settings[s.key] = s.value;
 });
 
 const telegram = settings.telegram || {};
@@ -22,257 +22,295 @@ const github = settings.github || {};
 ---
 
 <Layout title="Settings">
-  <div class="settings-container">
-    <h1>System Settings</h1>
-    <p style="color: var(--text-muted); margin-bottom: 2rem;">Manage integration APIs, credentials, and notification thresholds.</p>
+ <div class="settings-container">
+ <h1>System Settings</h1>
+ <p style="color: var(--text-muted); margin-bottom: 2rem;">Manage integration APIs, credentials, and notification thresholds.</p>
 
-    <div class="settings-grid">
-      <!-- Telegram Configuration -->
-      <div class="glass-card">
-        <h2>Telegram Bot Setup</h2>
-        <form id="telegram-form" class="settings-form">
-          <div class="form-group">
-            <label>Bot Token</label>
-            <input type="password" id="bot_token" value={telegram?.bot_token || ''} class="glass-input-full" placeholder="512345678:AAH..." />
-          </div>
-          <div class="form-group">
-            <label>Chat ID</label>
-            <input type="text" id="chat_id" value={telegram.chat_id || ''} class="glass-input-full" placeholder="e.g. 98765432" />
-          </div>
-          <div class="checkbox-group">
-            <label>
-              <input type="checkbox" id="notify_on_discovery" checked={telegram.notify_on_discovery !== false} />
-              Notify on discovery of matching domains
-            </label>
-            <label>
-              <input type="checkbox" id="notify_on_delete_day" checked={telegram.notify_on_delete_day !== false} />
-              Notify on deletion day reminder
-            </label>
-            <label>
-              <input type="checkbox" id="notify_on_available" checked={telegram.notify_on_available !== false} />
-              Notify when domains drop and become available
-            </label>
-            <label>
-              <input type="checkbox" id="notify_on_errors" checked={telegram.notify_on_errors !== false} />
-              Notify on scraper execution failures
-            </label>
-          </div>
-          <div class="button-row">
-            <button type="button" id="save-telegram-btn" class="btn">Save Telegram Config</button>
-            <button type="button" id="test-telegram-btn" class="btn secondary-btn">Test Notification</button>
-          </div>
-        </form>
-      </div>
+ <div class="settings-grid">
+ <!-- Telegram Configuration -->
+ <div class="glass-card">
+ <h2>Telegram Bot Setup</h2>
+ <form id="telegram-form" class="settings-form">
+ <div class="form-group">
+ <label>Bot Token</label>
+ <input type="password" id="bot_token" value={telegram?.bot_token || ''} class="glass-input-full" placeholder="512345678:AAH..." />
+ </div>
+ <div class="form-group">
+ <label>Chat ID</label>
+ <input type="text" id="chat_id" value={telegram.chat_id || ''} class="glass-input-full" placeholder="e.g. 98765432" />
+ </div>
+ <div class="checkbox-group">
+ <label>
+ <input type="checkbox" id="notify_on_discovery" checked={telegram.notify_on_discovery !== false} />
+ Notify on discovery of matching domains
+ </label>
+ <label>
+ <input type="checkbox" id="notify_on_delete_day" checked={telegram.notify_on_delete_day !== false} />
+ Notify on deletion day reminder
+ </label>
+ <label>
+ <input type="checkbox" id="notify_on_available" checked={telegram.notify_on_available !== false} />
+ Notify when domains drop and become available
+ </label>
+ <label>
+ <input type="checkbox" id="notify_on_errors" checked={telegram.notify_on_errors !== false} />
+ Notify on scraper execution failures
+ </label>
+ </div>
+ <div class="button-row">
+ <button type="button" id="save-telegram-btn" class="btn">Save Telegram Config</button>
+ <button type="button" id="test-telegram-btn" class="btn secondary-btn">Test Notification</button>
+ </div>
+ </form>
+ </div>
 
-      <!-- ExpiredDomains.net Session Cookies -->
-      <div class="glass-card">
-        <h2>ExpiredDomains Cookies</h2>
-        <p style="color: var(--text-muted); margin-bottom: 1.25rem;">
-          Paste your authenticated cookies here. Format: JSON object of <code>cookieName</code> → <code>cookieValue</code>.
-          Example: <code>{'{ "ExpiredDomainssessid": "472b9..." }'}</code>
-        </p>
+ <!-- ExpiredDomains.net Session Cookies -->
+ <div class="glass-card">
+ <h2>ExpiredDomains Cookies</h2>
+ <p style="color: var(--text-muted); margin-bottom: 1.25rem;">
+ Paste your authenticated cookies here. Format: JSON object of <code>cookieName</code> → <code>cookieValue</code>.
+ Example: <code>{'{ "ExpiredDomainssessid": "472b9..." }'}</code>
+ </p>
 
-        <form id="cookies-form" class="settings-form">
-          <div class="form-group">
-            <label>Cookies JSON</label>
-            <textarea
-              id="cookies_json"
-              class="glass-input-full"
-              rows={6}
-              placeholder="Enter cookies JSON"
-            >{cookies && typeof cookies === 'object' ? JSON.stringify(cookies, null, 2) : ''}</textarea>
-          </div>
-          <button type="button" id="save-cookies-btn" class="btn">Update Session Cookies</button>
-        </form>
-      </div>
+ <form id="cookies-form" class="settings-form">
+ <div class="form-group">
+ <label>Cookies JSON</label>
+ <textarea
+ id="cookies_json"
+ class="glass-input-full"
+ rows={6}
+ placeholder="Enter cookies JSON"
+ >{cookies && typeof cookies === 'object' ? JSON.stringify(cookies, null, 2) : ''}</textarea>
+ </div>
+ <button type="button" id="save-cookies-btn" class="btn">Update Session Cookies</button>
+ </form>
+ </div>
 
-      <!-- GitHub Octokit Configuration -->
-      <div class="glass-card">
-        <h2>GitHub Scraper Trigger</h2>
-        <p style="color: var(--text-muted); margin-bottom: 1.25rem;">Allows the dashboard to trigger the scraper on-demand via the GitHub API.</p>
+ <!-- GitHub Octokit Configuration -->
+ <div class="glass-card">
+ <h2>GitHub Scraper Trigger</h2>
+ <p style="color: var(--text-muted); margin-bottom: 1.25rem;">Allows the dashboard to trigger the scraper on-demand via the GitHub API.</p>
 
-        <form id="github-form" class="settings-form">
-          <div class="form-group">
-            <label>Repository Owner</label>
-            <input type="text" id="repo_owner" value={github.repo_owner || ''} class="glass-input-full" placeholder="e.g. Octocat" />
-          </div>
-          <div class="form-group">
-            <label>Repository Name</label>
-            <input type="text" id="repo_name" value={github.repo_name || ''} class="glass-input-full" placeholder="e.g. domain-extractor" />
-          </div>
-          <div class="form-group">
-            <label>GitHub Personal Access Token (PAT)</label>
-            <input type="password" id="pat_token" value={github.pat_token || ''} class="glass-input-full" placeholder="ghp_..." />
-          </div>
-          <button type="button" id="save-github-btn" class="btn">Update Repository Link</button>
-        </form>
-      </div>
-    </div>
-  </div>
+ <form id="github-form" class="settings-form">
+ <div class="form-group">
+ <label>Repository Owner</label>
+ <input type="text" id="repo_owner" value={github.repo_owner || ''} class="glass-input-full" placeholder="e.g. Octocat" />
+ </div>
+ <div class="form-group">
+ <label>Repository Name</label>
+ <input type="text" id="repo_name" value={github.repo_name || ''} class="glass-input-full" placeholder="e.g. domain-extractor" />
+ </div>
+ <div class="form-group">
+ <label>GitHub Personal Access Token (PAT)</label>
+ <input type="password" id="pat_token" value={github.pat_token || ''} class="glass-input-full" placeholder="ghp_..." />
+ </div>
+ <button type="button" id="save-github-btn" class="btn">Update Repository Link</button>
+ </form>
+ </div>
 
-  <style>
-    .settings-container {
-      display: flex;
-      flex-direction: column;
-    }
-    .settings-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2rem;
-    }
-    @media (max-width: 1024px) {
-      .settings-grid { grid-template-columns: 1fr; }
-    }
-    .settings-form {
-      display: flex;
-      flex-direction: column;
-      gap: 1.25rem;
-      margin-top: 1rem;
-    }
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-    .checkbox-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-    .checkbox-group label {
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      font-size: 0.9rem;
-      cursor: pointer;
-      color: var(--text-muted);
-      transition: var(--transition);
-    }
-    .checkbox-group label:hover {
-      color: var(--text-main);
-    }
-    .checkbox-group input {
-      width: 16px;
-      height: 16px;
-      accent-color: var(--primary);
-    }
-    .button-row {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
-    .secondary-btn {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--glass-border);
-      color: var(--text-main);
-      box-shadow: none;
-    }
-    .secondary-btn:hover {
-      background: rgba(255, 255, 255, 0.10);
-      transform: translateY(-2px);
-    }
-  </style>
+ <!-- Scraper Limits -->
+ <div class="glass-card">
+ <h2>Scraper Limits</h2>
+ <form id="limits-form" class="settings-form">
+ <div class="form-group">
+ <label>Maximum Domains per Run</label>
+ <input
+ type="number"
+ id="max_extract_domains"
+ min="1"
+ placeholder="e.g. 50"
+ value={settings.max_extract_domains ?? ''}
+ class="glass-input-full"
+ />
+ <small style="color: var(--text-muted);">
+ Controls how many domains are extracted from ExpiredDomains.net in a single run.
+ Use a low number while testing.
+ </small>
+ </div>
+ <button type="button" id="save-limits-btn" class="btn">
+ Save Limits
+ </button>
+ </form>
+ </div>
+ </div>
+ </div>
+ </div>
 
-  <script lang="ts">
-    // Save Config Helper
-    async function saveConfig(key: string, value: object) {
-      try {
-        const res = await fetch('/api/settings', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ key, value })
-        });
-        if (res.ok) {
-          alert('Configuration updated successfully!');
-        } else {
-          const errData = await res.json();
-          alert('Failed to update config: ' + errData.error);
-        }
-      } catch (err) {
-        alert('Error saving config: ' + err);
-      }
-    }
+ <style>
+ .settings-container {
+ display: flex;
+ flex-direction: column;
+ }
+ .settings-grid {
+ display: grid;
+ grid-template-columns: 1fr 1fr;
+ gap: 2rem;
+ }
+ @media (max-width: 1024px) {
+ .settings-grid { grid-template-columns: 1fr; }
+ }
+ .settings-form {
+ display: flex;
+ flex-direction: column;
+ gap: 1.25rem;
+ margin-top: 1rem;
+ }
+ .form-group {
+ display: flex;
+ flex-direction: column;
+ gap: 0.5rem;
+ }
+ .checkbox-group {
+ display: flex;
+ flex-direction: column;
+ gap: 0.75rem;
+ }
+ .checkbox-group label {
+ display: flex;
+ align-items: center;
+ gap: 0.6rem;
+ font-size: 0.9rem;
+ cursor: pointer;
+ color: var(--text-muted);
+ transition: var(--transition);
+ }
+ .checkbox-group label:hover {
+ color: var(--text-main);
+ }
+ .checkbox-group input {
+ width: 16px;
+ height: 16px;
+ accent-color: var(--primary);
+ }
+ .button-row {
+ display: flex;
+ gap: 1rem;
+ flex-wrap: wrap;
+ }
+ .secondary-btn {
+ background: rgba(255, 255, 255, 0.05);
+ border: 1px solid var(--glass-border);
+ color: var(--text-main);
+ box-shadow: none;
+ }
+ .secondary-btn:hover {
+ background: rgba(255, 255, 255, 0.10);
+ transform: translateY(-2px);
+ }
+ </style>
 
-    // Bind Telegram save button
-    document.getElementById('save-telegram-btn')?.addEventListener('click', () => {
-      const bot_token = (document.getElementById('bot_token') as HTMLInputElement).value;
-      const chat_id = (document.getElementById('chat_id') as HTMLInputElement).value;
-      const notify_on_discovery = (document.getElementById('notify_on_discovery') as HTMLInputElement).checked;
-      const notify_on_delete_day = (document.getElementById('notify_on_delete_day') as HTMLInputElement).checked;
-      const notify_on_available = (document.getElementById('notify_on_available') as HTMLInputElement).checked;
-      const notify_on_errors = (document.getElementById('notify_on_errors') as HTMLInputElement).checked;
+ <script lang="ts">
+ // Save Config Helper
+ async function saveConfig(key: string, value: object) {
+ try {
+ const res = await fetch('/api/settings', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({ key, value })
+ });
+ if (res.ok) {
+ alert('Configuration updated successfully!');
+ } else {
+ const errData = await res.json();
+ alert('Failed to update config: ' + errData.error);
+ }
+ } catch (err) {
+ alert('Error saving config: ' + err);
+ }
+ }
 
-      saveConfig('telegram', {
-        bot_token,
-        chat_id,
-        notify_on_discovery,
-        notify_on_delete_day,
-        notify_on_available,
-        notify_on_errors
-      });
-    });
+ // Bind Telegram save button
+ document.getElementById('save-telegram-btn')?.addEventListener('click', () => {
+ const bot_token = (document.getElementById('bot_token') as HTMLInputElement).value;
+ const chat_id = (document.getElementById('chat_id') as HTMLInputElement).value;
+ const notify_on_discovery = (document.getElementById('notify_on_discovery') as HTMLInputElement).checked;
+ const notify_on_delete_day = (document.getElementById('notify_on_delete_day') as HTMLInputElement).checked;
+ const notify_on_available = (document.getElementById('notify_on_available') as HTMLInputElement).checked;
+ const notify_on_errors = (document.getElementById('notify_on_errors') as HTMLInputElement).checked;
 
-    // Telegram Connection Test
-    document.getElementById('test-telegram-btn')?.addEventListener('click', async () => {
-      const bot_token = (document.getElementById('bot_token') as HTMLInputElement).value;
-      const chat_id = (document.getElementById('chat_id') as HTMLInputElement).value;
-      if (!bot_token || !chat_id) {
-        alert('Bot Token and Chat ID are required to send a test message.');
-        return;
-      }
-      try {
-        const url = `https://api.telegram.org/bot${bot_token}/sendMessage`;
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chat_id, text: '🚀 *Domain Extractor Integration Test successful!* Telegram alerts are configured correctly.', parse_mode: 'Markdown' })
-        });
-        if (res.ok) {
-          alert('Test alert dispatched. Verify receipt in your Telegram application.');
-        } else {
-          alert('Telegram API returned an error response. Double-check Bot Token and Chat ID.');
-        }
-      } catch (err) {
-        alert('Error connecting to Telegram API: ' + err);
-      }
-    });
+ saveConfig('telegram', {
+ bot_token,
+ chat_id,
+ notify_on_discovery,
+ notify_on_delete_day,
+ notify_on_available,
+ notify_on_errors
+ });
+ });
 
-    // Bind cookies button (cookies JSON → settings.cookies JSONB)
-    document.getElementById('save-cookies-btn')?.addEventListener('click', async () => {
-      const textarea = document.getElementById('cookies_json') as HTMLTextAreaElement;
-      const raw = (textarea?.value || '').trim();
+ // Telegram Connection Test
+ document.getElementById('test-telegram-btn')?.addEventListener('click', async () => {
+ const bot_token = (document.getElementById('bot_token') as HTMLInputElement).value;
+ const chat_id = (document.getElementById('chat_id') as HTMLInputElement).value;
+ if (!bot_token || !chat_id) {
+ alert('Bot Token and Chat ID are required to send a test message.');
+ return;
+ }
+ try {
+ const url = `https://api.telegram.org/bot${bot_token}/sendMessage`;
+ const res = await fetch(url, {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({ chat_id, text: '🚀 *Domain Extractor Integration Test successful!* Telegram alerts are configured correctly.', parse_mode: 'Markdown' })
+ });
+ if (res.ok) {
+ alert('Test alert dispatched. Verify receipt in your Telegram application.');
+ } else {
+ alert('Telegram API returned an error response. Double-check Bot Token and Chat ID.');
+ }
+ } catch (err) {
+ alert('Error connecting to Telegram API: ' + err);
+ }
+ });
 
-      if (!raw) {
-        alert('Cookies JSON is required.');
-        return;
-      }
+ // Bind cookies button (cookies JSON → settings.cookies JSONB)
+ document.getElementById('save-cookies-btn')?.addEventListener('click', async () => {
+ const textarea = document.getElementById('cookies_json') as HTMLTextAreaElement;
+ const raw = (textarea?.value || '').trim();
 
-      // Validate JSON server-side before saving
-      try {
-        const parseRes = await fetch('/api/parse_cookies_json', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ json: raw })
-        });
+ if (!raw) {
+ alert('Cookies JSON is required.');
+ return;
+ }
 
-        const parseData = await parseRes.json();
-        if (!parseRes.ok) {
-          alert('Invalid cookies JSON: ' + (parseData.error || 'unknown error'));
-          return;
-        }
+ // Validate JSON server-side before saving
+ try {
+ const parseRes = await fetch('/api/parse_cookies_json', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({ json: raw })
+ });
 
-        await saveConfig('cookies', parseData.cookies);
-      } catch (err) {
-        alert('Error saving cookies: ' + err);
-      }
-    });
+ const parseData = await parseRes.json();
+ if (!parseRes.ok) {
+ alert('Invalid cookies JSON: ' + (parseData.error || 'unknown error'));
+ return;
+ }
 
-    // Bind github button
-    document.getElementById('save-github-btn')?.addEventListener('click', () => {
-      const repo_owner = (document.getElementById('repo_owner') as HTMLInputElement).value;
-      const repo_name = (document.getElementById('repo_name') as HTMLInputElement).value;
-      const pat_token = (document.getElementById('pat_token') as HTMLInputElement).value;
-      saveConfig('github', { repo_owner, repo_name, pat_token });
-    });
-  </script>
+ await saveConfig('cookies', parseData.cookies);
+ } catch (err) {
+ alert('Error saving cookies: ' + err);
+ }
+ });
+
+ // Bind github button
+ document.getElementById('save-github-btn')?.addEventListener('click', () => {
+ const repo_owner = (document.getElementById('repo_owner') as HTMLInputElement).value;
+ const repo_name = (document.getElementById('repo_name') as HTMLInputElement).value;
+ const pat_token = (document.getElementById('pat_token') as HTMLInputElement).value;
+ saveConfig('github', { repo_owner, repo_name, pat_token });
+ });
+
+ // Bind limits button
+ document.getElementById('save-limits-btn')?.addEventListener('click', () => {
+ const max_extract_domains = Number(
+ (document.getElementById('max_extract_domains') as HTMLInputElement).value
+ );
+ if (!max_extract_domains || max_extract_domains < 1) {
+ alert('Please enter a valid number (minimum 1).');
+ return;
+ }
+ saveConfig('max_extract_domains', max_extract_domains);
+ });
+ </script>
 </Layout>
